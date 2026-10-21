@@ -1,0 +1,6 @@
+{
+  "name": "NucleoInstavel.Editor",
+  "rootNamespace": "NucleoInstavel.Editor",
+  "references": ["NucleoInstavel.Runtime", "Unity.InputSystem", "UnityEngine.UI", "Unity.TextMeshPro"],
+  "includePlatforms": ["Editor"]
+}

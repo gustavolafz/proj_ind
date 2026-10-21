@@ -1,0 +1,5 @@
+{
+  "name": "NucleoInstavel.Runtime",
+  "rootNamespace": "NucleoInstavel",
+  "references": ["Unity.InputSystem", "UnityEngine.UI", "Unity.TextMeshPro"]
+}

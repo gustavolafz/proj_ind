@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{{ PRODUCT_NAME }}}</title>
+    <style>
+      html, body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #02060c;
+      }
+
+      [hidden] { display: none !important; }
+
+      #unity-container {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: #02060c;
+      }
+
+      #unity-frame {
+        position: relative;
+        width: min(100vw, 177.77777778vh);
+        height: min(100vh, 56.25vw);
+      }
+
+      #unity-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        background: #02060c;
+        outline: none;
+      }
+
+      #unity-loading-bar {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        align-content: center;
+        justify-items: center;
+        gap: 16px;
+        color: #94f7ff;
+        background: #02060c;
+        font: 16px system-ui, sans-serif;
+      }
+
+      #unity-progress {
+        width: min(260px, 70%);
+        accent-color: #5cdeeb;
+      }
+
+      #unity-warning {
+        position: absolute;
+        inset: 12px 12px auto;
+        padding: 12px;
+        color: #fff;
+        background: #59213a;
+        font: 14px system-ui, sans-serif;
+      }
+
+      #unity-fullscreen-button {
+        position: absolute;
+        right: 8px;
+        bottom: 8px;
+        width: 36px;
+        height: 36px;
+        padding: 7px;
+        border: 1px solid #47858e;
+        border-radius: 4px;
+        color: #b9faff;
+        background: #061119cc;
+        cursor: pointer;
+      }
+
+      #unity-fullscreen-button:hover,
+      #unity-fullscreen-button:focus-visible {
+        background: #194451;
+        outline: 2px solid #94f7ff;
+      }
+    </style>
+  </head>
+  <body>
+    <main id="unity-container">
+      <div id="unity-frame">
+        <canvas id="unity-canvas" width="{{{ WIDTH }}}" height="{{{ HEIGHT }}}" tabindex="0" aria-label="Núcleo Instável"></canvas>
+        <div id="unity-loading-bar" role="status">
+          <span>Carregando Núcleo Instável…</span>
+          <progress id="unity-progress" max="1" value="0" aria-label="Carregamento"></progress>
+        </div>
+        <div id="unity-warning" role="alert" hidden></div>
+        <button id="unity-fullscreen-button" type="button" aria-label="Entrar em tela cheia" title="Tela cheia" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"></path>
+          </svg>
+        </button>
+      </div>
+    </main>
+    <script>
+      const canvas = document.querySelector("#unity-canvas");
+      const container = document.querySelector("#unity-container");
+      const loading = document.querySelector("#unity-loading-bar");
+      const progress = document.querySelector("#unity-progress");
+      const warning = document.querySelector("#unity-warning");
+      const fullscreen = document.querySelector("#unity-fullscreen-button");
+
+      function showBanner(message, type) {
+        warning.textContent = message;
+        warning.hidden = false;
+
+        if (type !== "error") {
+          setTimeout(() => {
+            if (warning.textContent === message) warning.hidden = true;
+          }, 5000);
+        }
+      }
+
+      function showLoadError(error) {
+        loading.hidden = true;
+        showBanner("Não foi possível carregar o jogo. Atualize a página para tentar novamente.", "error");
+        console.error(error);
+      }
+
+      canvas.addEventListener("pointerdown", () => canvas.focus({ preventScroll: true }));
+
+      fullscreen.addEventListener("click", async () => {
+        try {
+          if (document.fullscreenElement) await document.exitFullscreen();
+          else await container.requestFullscreen();
+        } catch (error) {
+          console.warn("Tela cheia indisponível:", error);
+        }
+      });
+
+      document.addEventListener("fullscreenchange", () => {
+        fullscreen.setAttribute("aria-label", document.fullscreenElement ? "Sair da tela cheia" : "Entrar em tela cheia");
+        canvas.focus({ preventScroll: true });
+      });
+
+      const buildUrl = "Build";
+      const config = {
+        arguments: [],
+        dataUrl: buildUrl + "/{{{ DATA_FILENAME }}}",
+        frameworkUrl: buildUrl + "/{{{ FRAMEWORK_FILENAME }}}",
+        codeUrl: buildUrl + "/{{{ CODE_FILENAME }}}",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: {{{ JSON.stringify(COMPANY_NAME) }}},
+        productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
+        productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
+        showBanner: showBanner,
+      };
+
+      const loader = document.createElement("script");
+      loader.src = buildUrl + "/{{{ LOADER_FILENAME }}}";
+      loader.onerror = showLoadError;
+      loader.onload = () => {
+        createUnityInstance(canvas, config, value => { progress.value = value; })
+          .then(() => {
+            loading.hidden = true;
+            fullscreen.hidden = !container.requestFullscreen || !document.fullscreenEnabled;
+          })
+          .catch(showLoadError);
+      };
+
+      document.body.appendChild(loader);
+    </script>
+  </body>
+</html>
